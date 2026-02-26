@@ -122,17 +122,20 @@
             return;
         }
 
-        // Lecture en mémoire — aucun upload serveur
-        await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10 MB
+        await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
         using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);
         var rawBytes = ms.ToArray();
 
-        // Décodage
         try
         {
             _saveData = SettingsData.Decode(rawBytes);
             _richData = _saveData.ToRichData();
+        
+            // Force un re-render propre avant d'afficher le snackbar
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(50); // laisse le DOM se stabiliser
+        
             Snackbar.Add("File loaded successfully! Found " + _saveData.Values.Count + " values.", Severity.Success);
         }
         catch (Exception e)
