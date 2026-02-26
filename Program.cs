@@ -15,6 +15,10 @@ public class Program
             
             .AddRazorComponents()
             .AddInteractiveServerComponents();
+        
+        // Configure Kestrel to bind to port 8080 when present, otherwise default to port 80.
+        var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+        builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
         var app = builder.Build();
 
@@ -27,11 +31,11 @@ public class Program
         }
 
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-        app.UseHttpsRedirection();
+        // app.UseHttpsRedirection();
 
         app.UseAntiforgery();
 
-        app.MapStaticAssets();
+        app.UseStaticFiles();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 
