@@ -1,0 +1,30 @@
+﻿@using MindustrySaveEditor.Core
+<MudSelect T="SectorInfo?" @bind-Value="@SelectedSector"
+           Placeholder="Select a Sector" Label="Sector"
+           Variant="Variant.Outlined" FullWidth="true">
+    @foreach (var (sector, sectorInfo) in RichData.SectorInfos)
+    {
+        <MudSelectItem Value="@sectorInfo">
+            <div class="d-flex align-center gap-2">
+                @if (sector.IsNamed)
+                {
+                    <MudImage Src="@sector.FullImagePath"
+                              Alt="@sector.FullDisplayName" Width="24" Height="24"
+                              Style="vertical-align: middle;"/>
+                }
+
+                <MudText>@sector.FullDisplayName</MudText>
+            </div>
+        </MudSelectItem>
+    }
+</MudSelect>
+
+@if (SelectedSector != null)
+{
+    <SectorInfoEditor Info="@SelectedSector"/>
+}
+
+@code { 
+    [Parameter, EditorRequired] public RichSettingsData RichData { get; set; }
+    private SectorInfo? SelectedSector;
+}

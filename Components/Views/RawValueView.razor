@@ -1,0 +1,137 @@
+﻿@using MindustrySaveEditor.Core
+
+<MudStack Spacing="3">
+    <MudSwitch T="bool" @bind-Value="@DenseTable" Color="Color.Primary">
+        Dense Table
+    </MudSwitch>
+
+    <MudSwitch T="bool" @bind-Value="@ShowResearchEntriesInRaw" Color="Color.Secondary">
+        Show research entries
+    </MudSwitch>
+
+    <MudSwitch T="bool" @bind-Value="@ShowSectorEntriesInRaw" Color="Color.Tertiary">
+        Show sectors entries
+    </MudSwitch>
+
+    <MudDivider/>
+
+    <MudCard Outlined Elevation="0">
+        <MudTable Items="@FilteredEntries" Hover="true"
+                  Bordered Elevation="0"
+                  SortLabel="Sort By" Dense="@DenseTable">
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel
+                        SortBy="@(new Func<KeyValuePair<string, object>, object>(x => x.Key))">
+                        Key Id
+                    </MudTableSortLabel>
+                </MudTh>
+
+                <MudTh Style="width: 150px;">
+                    <MudTableSortLabel
+                        SortBy="@(new Func<KeyValuePair<string, object>, object>(x => x.Value.GetType().Name))">
+                        Value Type
+                    </MudTableSortLabel>
+                </MudTh>
+
+                <MudTh Style="width: 200px;">
+                    Value
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Key Id">@context.Key</MudTd>
+
+                <MudTd DataLabel="Value Type">
+                    <code>@context.Value.GetType().Name</code>
+                </MudTd>
+
+                <MudTd DataLabel="Value">
+
+                    @switch (context.Value)
+                    {
+                        case bool booleanValue:
+                            <MudSwitch T="bool" Value="booleanValue" Color="Color.Success"
+                                       Size="@(DenseTable ? Size.Small : Size.Medium)"
+                                       ValueChanged="@(newValue => SaveData.Values[context.Key] = newValue)"/>
+                            break;
+
+                        case int intValue:
+                            <MudNumericField T="int" Value="intValue" Variant="Variant.Outlined"
+                                             Style="@(DenseTable ? "height: 25px;" : "height: auto;")"
+                                             ValueChanged="@(newValue => SaveData.Values[context.Key] = newValue)"/>
+                            break;
+
+                        case float floatValue:
+                            <MudNumericField T="float" Value="floatValue" Variant="Variant.Outlined"
+                                             Style="@(DenseTable ? "height: 25px;" : "height: auto;")"
+                                             ValueChanged="@(newValue => SaveData.Values[context.Key] = newValue)"/>
+                            break;
+
+                        case string stringValue:
+                            <MudTextField T="string" Value="stringValue" Variant="Variant.Outlined"
+                                          Style="@(DenseTable ? "height: 25px;" : "height: auto;")"
+                                          ValueChanged="@(newValue => SaveData.Values[context.Key] = newValue)"/>
+                            break;
+
+                        case byte[] bytesValue:
+                            <MudText>Can't edit directly</MudText>
+                            break;
+
+                        default:
+                            @(context.Value + "(Cannot edit directly)")
+                            break;
+                    }
+
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }"/>
+            </PagerContent>
+        </MudTable>
+    </MudCard>
+</MudStack>
+
+@* @foreach (var (key, value) in SaveData.Values) *@
+@* { *@
+@*     if (key.StartsWith("req-") && !ShowResearchEntriesInRaw) *@
+@*         continue; *@
+@* *@
+@*     if (key.EndsWith("-info") && !ShowSectorEntriesInRaw) *@
+@*         continue; *@
+@* *@
+@*     <MudText><b>@key</b>: @value [@value.GetType()]</MudText> *@
+@* } *@
+
+@code {
+
+    [Parameter, EditorRequired] public SettingsData SaveData { get; set; }
+
+    private bool DenseTable { get; set; } = true;
+
+    private bool ShowResearchEntriesInRaw
+    {
+        get;
+        set
+        {
+            field = value;
+            StateHasChanged();
+        }
+    }
+
+    private bool ShowSectorEntriesInRaw
+    {
+        get;
+        set
+        {
+            field = value;
+            StateHasChanged();
+        }
+    }
+
+    public List<KeyValuePair<string, object>> FilteredEntries => SaveData.Values
+        .Where(entry =>
+            (ShowResearchEntriesInRaw || !(entry.Key.StartsWith("req-") || entry.Key.EndsWith("-unlocked"))) &&
+            (ShowSectorEntriesInRaw || !entry.Key.EndsWith("-info")))
+        .ToList();
+
+}

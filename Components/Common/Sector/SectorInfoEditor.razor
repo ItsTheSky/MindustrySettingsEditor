@@ -1,0 +1,331 @@
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+
+    @* ═══════════════════════ HEADER ═══════════════════════ *@
+
+    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
+            <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Large" Color="Color.Primary"/>
+            <MudText Typo="Typo.h4" Style="font-weight: 700;">Sector Info Editor</MudText>
+            @if (!string.IsNullOrEmpty(Info.Name))
+            {
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined"
+                         Size="Size.Small">@Info.Name</MudChip>
+            }
+        </MudStack>
+    </MudStack>
+
+    <MudDivider Class="mb-6"/>
+
+    @* ═══════════════════════ IDENTITY & DISPLAY ═══════════════════════ *@
+
+    <SectionHeader Icon="@Icons.Material.Filled.Badge" Title="Identity & Display"/>
+
+    <MudGrid Spacing="3" Class="mb-6">
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="Info.Name" Label="Sector Name" Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Label"
+                          Immediate DebounceInterval="300"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="Info.Icon" Label="Icon" Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.EmojiEmotions"
+                          Immediate DebounceInterval="300"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="Info.ContentIcon" Label="Content Icon" Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Image"
+                          Immediate DebounceInterval="300"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="Info.BestCoreType" Label="Core Type" Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Hub"
+                          Immediate DebounceInterval="300"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="Info.LastPresetName" Label="Last Preset" Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Map"
+                          Immediate DebounceInterval="300"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudNumericField @bind-Value="Info.StorageCapacity" Label="Storage Capacity" Variant="Variant.Outlined"
+                             Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Inventory"
+                             Min="0"/>
+        </MudItem>
+    </MudGrid>
+
+    @* ═══════════════════════ FLAGS (toggles) ═══════════════════════ *@
+
+    <SectionHeader Icon="@Icons.Material.Filled.ToggleOn" Title="States & Flags"/>
+
+    <MudPaper Outlined Class="pa-4 mb-6">
+        <MudGrid Spacing="3">
+            <MudItem xs="6" sm="4" md="3">
+                <MudSwitch @bind-Value="Info.HasCore" Label="Core Present" Color="Color.Success"/>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="3">
+                <MudSwitch @bind-Value="Info.Waves" Label="Waves Enabled" Color="Color.Info"/>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="3">
+                <MudSwitch @bind-Value="Info.Attack" Label="Attack Mode" Color="Color.Error"/>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="3">
+                <MudSwitch @bind-Value="Info.HasSpawns" Label="Enemy Spawns" Color="Color.Warning"/>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="3">
+                <MudSwitch @bind-Value="Info.WasCaptured" Label="Already Captured" Color="Color.Success"/>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="3">
+                <MudSwitch @bind-Value="Info.Shown" Label="Shown to Player" Color="Color.Tertiary"/>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @* ═══════════════════════ WAVE PARAMETERS ═══════════════════════ *@
+
+    <SectionHeader Icon="@Icons.Material.Filled.Waves" Title="Wave Parameters"/>
+
+    <MudGrid Spacing="3" Class="mb-6">
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.Wave" Label="Current Wave" Variant="Variant.Outlined"
+                             Min="1" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Numbers"/>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.WinWave" Label="Win Wave" Variant="Variant.Outlined"
+                             Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.EmojiEvents"/>
+            <MudText Typo="Typo.caption" Color="Color.Tertiary">-1 = no limit</MudText>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField Value="WaveSpacingSeconds" Label="Interval (sec)" Variant="Variant.Outlined"
+                             Min="0f" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Timer"
+                             ValueChanged="@((float value) => OnWaveSpacingChanged(value))"/>
+            <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                @FormatDuration(Info.WaveSpacing)
+            </MudText>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.WaveVersion" Label="Wave Version" Variant="Variant.Outlined"
+                             Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Update"/>
+        </MudItem>
+    </MudGrid>
+
+    @* ═══════════════════════ MAP & POSITION ═══════════════════════ *@
+
+    <SectionHeader Icon="@Icons.Material.Filled.GridOn" Title="Map & Position"/>
+
+    <MudGrid Spacing="3" Class="mb-6">
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.LastWidth" Label="Width" Variant="Variant.Outlined"
+                             Min="0" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.SwapHoriz"/>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.LastHeight" Label="Height" Variant="Variant.Outlined"
+                             Min="0" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.SwapVert"/>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.SpawnPosition" Label="Spawn Position (packed)" Variant="Variant.Outlined"
+                             Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.MyLocation"/>
+            <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                X=@(Info.SpawnPosition & 0xFFFF), Y=@((Info.SpawnPosition >> 16) & 0xFFFF)
+            </MudText>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.Attempts" Label="Attempts" Variant="Variant.Outlined"
+                             Min="0" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Replay"/>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.MinutesCaptured" Label="Minutes Captured" Variant="Variant.Outlined"
+                             Min="0f" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Schedule"/>
+        </MudItem>
+        <MudItem xs="6" sm="4" md="3">
+            <MudNumericField @bind-Value="Info.LightCoverage" Label="Light Coverage" Variant="Variant.Outlined"
+                             Min="0f" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.LightMode"/>
+        </MudItem>
+    </MudGrid>
+
+    @* ═══════════════════════ RESOURCES ═══════════════════════ *@
+
+    <SectionHeader Icon="@Icons.Material.Filled.Diamond" Title="Known Resources"/>
+
+    <MudPaper Outlined Class="pa-4 mb-6">
+        @if (Info.Resources.Count > 0)
+        {
+            <MudChipSet T="string" ReadOnly>
+                @foreach (var resource in Info.Resources)
+                {
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Filled"
+                             CloseIcon="@(null)">
+                        <ResourceDisplay Resource="@resource" Small ShowText/>
+                    </MudChip>
+                }
+            </MudChipSet>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Color="Color.Tertiary">No resources defined</MudText>
+        }
+    </MudPaper>
+
+    @* ═══════════════════════ CORE ITEMS ═══════════════════════ *@
+
+    <SectionHeader Icon="@Icons.Material.Filled.Inventory2" Title="Core Items"
+                   Badge="@($"{Info.Items.Count} items")"/>
+
+    <MudPaper Outlined Class="pa-0 mb-6">
+        <MudTable Items="@Info.Items.OrderBy(kv => kv.Key)" Dense Hover Breakpoint="Breakpoint.None"
+                  Elevation="0">
+            <HeaderContent>
+                <MudTh Style="width: 50%;">Item</MudTh>
+                <MudTh Style="width: 35%;">Quantity</MudTh>
+                <MudTh Style="width: 15%; text-align: right;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Filled"
+                             CloseIcon="@(null)">
+                        <ResourceDisplay Resource="@context.Key" Small ShowText/>
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudNumericField Value="context.Value" Label="" Variant="Variant.Text" Dense Min="0"
+                                     ValueChanged="@((int v) => UpdateItem(context.Key, v))"
+                                     Style="max-width: 150px;"/>
+                </MudTd>
+                <MudTd Style="text-align: right;">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                   Color="Color.Error" OnClick="@(() => { Info.RawItems.Remove(context.Key.Id); })"/>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Tertiary" Align="Align.Center" Class="pa-4">
+                    No items in core
+                </MudText>
+            </NoRecordsContent>
+        </MudTable>
+
+        <MudDivider/>
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="pa-3">
+            <ResourceSelect @bind-Value="_newCoreItemType" Filter="@(r => !Info.Items.ContainsKey(r))"/>
+
+            <MudNumericField @bind-Value="_newCoreItemAmount"
+                             Label="Amount" Variant="Variant.Outlined"/>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Disabled="@(_newCoreItemType == null)"
+                       OnClick="@(() =>
+                                {
+                                    if (_newCoreItemType == null) return;
+                                    Info.RawItems[_newCoreItemType.Id] = _newCoreItemAmount;
+                                    _newCoreItemType = null;
+                                })">
+                Add
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @* ═══════════════════════ EXPORT STAT TABLES ═══════════════════════ *@
+
+    <ExportStatSection Title="Production" Icon="@Icons.Material.Filled.Factory"
+                       Stats="Info.Production"/>
+
+    @* <ExportStatSection Title="Raw Production" Icon="@Icons.Material.Filled.PrecisionManufacturing" *@
+    @*                    Stats="Info.RawProduction"/> *@
+    @* *@
+    @* <ExportStatSection Title="Exports" Icon="@Icons.Material.Filled.FlightTakeoff" *@
+    @*                    Stats="Info.Export"/> *@
+    @* *@
+    @* <ExportStatSection Title="Imports" Icon="@Icons.Material.Filled.FlightLand" *@
+    @*                    Stats="Info.Imports"/> *@
+
+</MudContainer>
+
+@code {
+
+    // ──────────────────────────────────────────────
+    //  PARAMETERS
+    // ──────────────────────────────────────────────
+
+    [Parameter, EditorRequired] public SectorInfo Info { get; set; } = new();
+
+    [Parameter] public EventCallback OnSaveRequested { get; set; }
+
+    [Parameter] public EventCallback OnResetRequested { get; set; }
+
+    // ──────────────────────────────────────────────
+    //  STATE
+    // ──────────────────────────────────────────────
+
+    private bool HasChanges { get; set; }
+
+    private float WaveSpacingSeconds
+    {
+        get => Info.WaveSpacing / 60f;
+        set => Info.WaveSpacing = value * 60f;
+    }
+
+
+    private Resource? _newCoreItemType;
+    private int _newCoreItemAmount = 100;
+
+    private string _newItemName = "";
+    private int _newItemAmount = 100;
+    private string _newResource = "";
+
+    // ──────────────────────────────────────────────
+    //  WAVE SPACING
+    // ──────────────────────────────────────────────
+
+    private void OnWaveSpacingChanged(float value)
+    {
+        Info.WaveSpacing = value * 60f;
+    }
+
+    private static string FormatDuration(float ticks)
+    {
+        var seconds = ticks / 60f;
+        if (seconds < 60) return $"{seconds:F1}s";
+        var minutes = seconds / 60f;
+        return $"{minutes:F1}min ({seconds:F0}s)";
+    }
+
+    // ──────────────────────────────────────────────
+    //  ITEMS
+    // ──────────────────────────────────────────────
+
+    private void UpdateItem(Resource key, int value)
+    {
+        Info.RawItems[key.Id] = value;
+    }
+
+    private void RemoveItem(string key)
+    {
+        Info.RawItems.Remove(key);
+    }
+
+    // ──────────────────────────────────────────────
+    //  COOLDOWNS
+    // ──────────────────────────────────────────────
+
+    private void UpdateCooldown(string key, float value)
+    {
+        Info.ImportCooldownTimers[key] = value;
+    }
+
+    private void RemoveCooldown(string key)
+    {
+        Info.ImportCooldownTimers.Remove(key);
+    }
+
+    // ──────────────────────────────────────────────
+    //  HELPERS
+    // ──────────────────────────────────────────────
+
+    private static Color GetItemColor(string itemName)
+    {
+        var colors = new[] { Color.Primary, Color.Secondary, Color.Success, Color.Warning, Color.Info, Color.Error, Color.Tertiary };
+        return colors[Math.Abs(itemName.GetHashCode()) % colors.Length];
+    }
+
+}

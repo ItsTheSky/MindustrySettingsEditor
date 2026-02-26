@@ -1,0 +1,178 @@
+﻿@page "/"
+@using MindustrySaveEditor.Components.Dialogs
+@using MindustrySaveEditor.Components.Views
+@using MindustrySaveEditor.Core
+
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@inject IDialogService DialogService
+@inject ILogger<Home> Logger
+
+<PageTitle>Mindustry Settings Editor</PageTitle>
+
+<MudLayout>
+    <MudMainContent
+        Style="display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow-y: auto; padding: 24px;">
+        <MudCard Style="@("max-width: 100%; padding: 10px;" + (_saveData != null ? " width: 80%;" : ""))"
+                 Outlined="true"
+                 ContentPadding="true">
+            <MudCardHeader>
+                <MudText Typo="Typo.h5" Align="Align.Center" Style="width: 100%;">
+                    Mindustry Settings Editor
+                </MudText>
+            </MudCardHeader>
+
+            <MudCardContent>
+                @if (_saveData == null || _richData == null)
+                {
+                    <MudStack Spacing="3" Style="max-width: 600px; margin: auto;">
+                        <MudAlert Severity="Severity.Warning" 
+                                  Icon="@Icons.Material.Filled.Warning">
+                            Please <b>backup your settings file</b> in case some issues occurs! I <b>am NOT</b> responsible for any data corruption.
+                            <br/>
+                            <br/>
+                            It is also not really optimized for mobiles. Please use tablet or the computer mode on your phone for a better experience.
+                        </MudAlert>
+                    
+                        <MudFileUpload T="IBrowserFile" Accept=".bin"
+                                       DragAndDrop="true"
+                                       MaximumFileCount="1" AppendMultipleFiles="false"
+                                       FilesChanged="OnFileSelected"/>
+                    
+                        <MudAlert Severity="Severity.Info" 
+                                  Icon="@Icons.Material.Filled.Check">
+                            Everything is done locally, nothing got uploaded to any server! Checkout the
+                            <MudLink Href="https://github.com/ItsTheSky/MindustrySettingsEditor">GitHub repo</MudLink>
+                            for more informations or if you have any ideas!
+                        </MudAlert>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudTabs Outlined="true" Rounded="true"
+                             Position="Position.Left" Style="width: 100%">
+
+                        <MudTabPanel Text="Research"
+                                     Icon="@Icons.Material.Filled.Science"
+                                     Style="padding: 0; width: 100%">
+                            <MudCard Style="padding: 10px; width: 100%" Outlined="true">
+                                <ResearchView RichData="@_richData" />
+                            </MudCard>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Sectors"
+                                     Icon="@Icons.Material.Filled.Map"
+                                     Style="padding: 0; width: 100%">
+                            <MudCard Style="padding: 10px; width: 100%; height: 100%;" Outlined="true">
+                                <SectorView RichData="@_richData" />
+                            </MudCard>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Raw Values"
+                                     Icon="@Icons.Material.Filled.List"
+                                     Style="padding: 0; width: 100%">
+                            <MudCard Style="padding: 10px; width: 100%" Outlined="true">
+                                <RawValueView SaveData="@_saveData" />
+                            </MudCard>
+                        </MudTabPanel>
+
+                    </MudTabs>
+                }
+            </MudCardContent>
+
+            @if (_saveData != null)
+            {
+                <MudCardActions>
+                    <MudGrid>
+
+                        <MudItem xs="12" md="6">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true">Cancel
+                            </MudButton>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudButtonGroup Color="Color.Success" Variant="Variant.Filled" FullWidth="true">
+                                <MudButton OnClick="SaveBin">Save</MudButton>
+
+                                <MudMenu Icon="@Icons.Material.Filled.ArrowDropDown" Style="align-self: auto;">
+                                    <MudMenuItem OnClick="SaveBinCompressed">Save Compressed</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => SaveJson(false))">Save as JSON (raw)</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => SaveJson(true))">Save as JSON (rich)</MudMenuItem>
+                                </MudMenu>
+                            </MudButtonGroup>
+                        </MudItem>
+
+                    </MudGrid>
+                </MudCardActions>
+            }
+        </MudCard>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+
+    private SettingsData? _saveData;
+    private RichSettingsData? _richData;
+
+    private async Task OnFileSelected(IBrowserFile file)
+    {
+        if (file == null!)
+        {
+            Snackbar.Add("No file selected.", Severity.Warning);
+            return;
+        }
+
+        // Lecture en mémoire — aucun upload serveur
+        await using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10 MB
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var rawBytes = ms.ToArray();
+
+        // Décodage
+        try
+        {
+            _saveData = SettingsData.Decode(rawBytes);
+            _richData = _saveData.ToRichData();
+            Snackbar.Add("File loaded successfully! Found " + _saveData.Values.Count + " values.", Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Failed to decode file: {e.Message}", Severity.Error);
+            Logger.LogError(e, "Failed to decode file");
+        }
+    }
+
+    #region Saving
+
+    private async Task Save(byte[] data)
+    {
+        var fileName = $"settings.bin";
+        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(data));
+    }
+
+    public async Task SaveBin()
+    {
+        if (_saveData == null || _richData == null) return;
+        _richData.SaveToSettings();
+        
+        await Save(_saveData.Encode(false));
+    }
+
+    public async Task SaveBinCompressed()
+    {
+        if (_saveData == null || _richData == null) return;
+        _richData.SaveToSettings();
+        await Save(_saveData.Encode());
+    }
+
+    public async Task SaveJson(bool rich)
+    {
+        if (_saveData == null || _richData == null) return;
+        _richData.SaveToSettings();
+
+        await Save([]);
+    }
+
+    #endregion
+
+}

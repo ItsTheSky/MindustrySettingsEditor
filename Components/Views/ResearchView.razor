@@ -1,0 +1,97 @@
+﻿@using MindustrySaveEditor.Components.Dialogs
+@using MindustrySaveEditor.Core
+
+@inject IDialogService DialogService
+
+<MudStack Spacing="3">
+    <MudTextField @bind-Value="ResearchFilter" Label="Filter Research"
+                  Variant="Variant.Outlined" Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"/>
+
+    @{
+        var validEntries = RichData.ResearchEntries
+            .Where(entry => string.IsNullOrEmpty(ResearchFilter) || entry.Key.Contains(ResearchFilter, StringComparison.OrdinalIgnoreCase));
+    }
+    <MudTable Items="@validEntries" Hover="true"
+              SortLabel="Sort By"
+              Dense>
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel
+                    SortBy="@(new Func<KeyValuePair<string, Dictionary<Resource, int>>, object>(x => x.Key))">
+                    Id
+                </MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width: 300px;">
+                Resources Preview
+            </MudTh>
+            <MudTh Style="width: 100px;">
+                <MudTableSortLabel
+                    SortBy="@(new Func<KeyValuePair<string, Dictionary<Resource, int>>, object>(x => RichData.UnlockedElements.ContainsKey(x.Key)))">
+                    Unlocked?
+                </MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width: 200px;">
+                Action
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Key</MudTd>
+            <MudTd>
+                <MudStack Row Spacing="1">
+                    @foreach (var resource in context.Value)
+                    {
+                        <ResourceDisplay Resource="@resource.Key" ShownAmount="@resource.Value"/>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Unlocked?">
+                <div class="d-flex justify-center">
+                    <MudCheckBox T="bool" Color="Color.Primary"
+                                 Value="@(RichData.UnlockedElements.ContainsKey(context.Key))"
+                                 ValueChanged="@(value =>
+                                               {
+                                                   if (value)
+                                                       RichData.UnlockedElements[context.Key] = true;
+                                                   else
+                                                       RichData.UnlockedElements.Remove(context.Key);
+                                               })"/>
+                </div>
+            </MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                           OnClick="@(() => OpenResearchResourceEditor(context.Key, context.Value))">
+                    Edit Resources
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }"/>
+        </PagerContent>
+    </MudTable>
+</MudStack>
+
+@code {
+
+    [Parameter, EditorRequired] public RichSettingsData RichData { get; set; }
+    private string? ResearchFilter;
+
+    public async Task OpenResearchResourceEditor(string researchKey, Dictionary<Resource, int> resources)
+    {
+        var parameters = new DialogParameters
+        {
+            ["ResearchName"] = researchKey,
+            ["ResearchResources"] = resources
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<EditResearchResourcesDialog>($"Edit {researchKey} Resources", parameters, options);
+        await dialog.Result;
+    }
+
+}

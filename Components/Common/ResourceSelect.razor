@@ -1,0 +1,30 @@
+﻿
+<MudSelect T="Resource?" @bind-Value="@Value" Style="padding: 0px"
+           Label="Item" Variant="Variant.Outlined">
+    @foreach (var resource in Resources.All.Where(resource => Filter(resource)))
+    {
+        <MudSelectItem T="Resource?" Value="@resource">
+            <ResourceDisplay Resource="@resource" Small ShowText />
+        </MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    
+    [Parameter] public Predicate<Resource> Filter { get; set; } = _ => true;
+    
+    [Parameter] public EventCallback<Resource?> ValueChanged { get; set; }
+
+    [Parameter]
+    public Resource? Value
+    {
+        get;
+        set
+        {
+            if (Equals(field, value)) return;
+            field = value;
+            ValueChanged.InvokeAsync(value);
+        }
+    }
+
+}

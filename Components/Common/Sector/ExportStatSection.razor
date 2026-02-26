@@ -1,0 +1,116 @@
+@using MudBlazor
+
+<SectionHeader Icon="@Icon" Title="@Title" Badge="@($"{Stats.Count} items")" />
+
+<MudPaper Outlined Class="pa-0 mb-6">
+    <MudTable Items="@ResourceStats.OrderBy(kv => kv.Key)" Dense
+              Breakpoint="Breakpoint.None" Elevation="0">
+        <HeaderContent>
+            <MudTh Style="width: 45%;">Item</MudTh>
+            <MudTh Style="width: 35%;">Average (items/sec)</MudTh>
+            <MudTh Style="width: 20%; text-align: right;">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudChip T="string" Color="Color.Default" Variant="Variant.Filled"
+                         CloseIcon="@(null)">
+                    <ResourceDisplay Resource="@context.Key" Small ShowText />
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                    <MudNumericField Value="context.Value.Mean" Variant="Variant.Text" Dense
+                                     ValueChanged="@((float v) => UpdateStat(context.Key.Id, v))"
+                                     Style="max-width: 150px;" Format="F2" />
+                    @if (context.Value.Mean > 0)
+                    {
+                        <MudProgressLinear Color="@GetRateColor(context.Value.Mean)" Value="@GetRatePercent(context.Value.Mean)"
+                                           Style="max-width: 100px;" Rounded Size="Size.Small" />
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd Style="text-align: right;">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                               Color="Color.Error" OnClick="() => RemoveStat(context.Key.Id)" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Color="Color.Tertiary" Align="Align.Center" Class="pa-4">
+                No data
+            </MudText>
+        </NoRecordsContent>
+    </MudTable>
+
+    @if (Stats.Count > 0)
+    {
+        <MudDivider />
+        <MudStack Row Justify="Justify.FlexEnd" Class="pa-2">
+            <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                Total: @Stats.Values.Sum(s => s.Mean).ToString("F2") items/sec
+            </MudText>
+        </MudStack>
+    }
+
+    <MudDivider />
+    <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="pa-3">
+        <MudTextField @bind-Value="_newKey" Label="Item" Variant="Variant.Outlined" Dense
+                      Style="max-width: 200px;" />
+        <MudNumericField @bind-Value="_newMean" Label="Average" Variant="Variant.Outlined" Dense
+                         Format="F2" Style="max-width: 120px;" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="AddStat"
+                   Disabled="string.IsNullOrWhiteSpace(_newKey)">
+            Add
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+    [Parameter, EditorRequired] public Dictionary<string, ExportStat> Stats { get; set; } = new();
+    [Parameter] public EventCallback OnChanged { get; set; }
+    
+    private Dictionary<Resource, ExportStat> ResourceStats => Stats.ToDictionary(kv => Resources.ById[kv.Key], kv => kv.Value);
+
+    private string _newKey = "";
+    private float _newMean = 0f;
+
+    private void UpdateStat(string key, float value)
+    {
+        Stats[key].Mean = value;
+        OnChanged.InvokeAsync();
+    }
+
+    private void RemoveStat(string key)
+    {
+        Stats.Remove(key);
+        OnChanged.InvokeAsync();
+    }
+
+    private void AddStat()
+    {
+        if (string.IsNullOrWhiteSpace(_newKey)) return;
+        var key = _newKey.Trim().ToLowerInvariant();
+        Stats[key] = new ExportStat { Mean = _newMean };
+        _newKey = "";
+        _newMean = 0f;
+        OnChanged.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Normalized throughput on a 0-100 scale for the progress bar.
+    /// Arbitrary max of 20 items/sec for display.
+    /// </summary>
+    private static double GetRatePercent(float mean)
+        => Math.Min(mean / 20f * 100f, 100f);
+
+    private static Color GetRateColor(float mean) => mean switch
+    {
+        >= 10f => Color.Success,
+        >= 5f => Color.Info,
+        >= 1f => Color.Warning,
+        _ => Color.Default,
+    };
+}

@@ -1,0 +1,45 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudSimpleTable Dense="true" Hover="true"
+                        Bordered="true"
+                        Style="overflow-x: auto;">
+            <thead>
+            <tr>
+                <th width="20">Icon</th>
+                <th>Name</th>
+                <th>Amount</th>
+            </tr>
+            
+            </thead>
+            <tbody>
+            @foreach (var (resource, amount) in ResearchResources)
+            {
+                <tr>
+                    <td><ResourceDisplay Resource="resource" /></td>
+                    <td>@resource.Name</td>
+                    <td>
+                        <MudNumericField T="int" Value="amount" Immediate="true"
+                                         Min="0" Max="int.MaxValue"
+                                         ValueChanged="@((newAmount) => ResearchResources[resource] = newAmount)" />
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [Parameter] public Dictionary<Resource, int> ResearchResources { get; set; }
+    [Parameter] public string ResearchName { get; set; }
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+
+}

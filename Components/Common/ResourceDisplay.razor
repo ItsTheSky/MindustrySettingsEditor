@@ -1,0 +1,27 @@
+﻿@using MindustrySaveEditor.Core.Model
+
+<MudTooltip Text="@(Resource.Name + ((ShownAmount != null) ? $": {ShownAmount}" : ""))" Delay="50">
+    <div class="d-flex flex-row align-items-center gap-2">
+        <MudImage Src="@Resource.FullIconPath"
+                  Alt="@Resource.Name"
+                  Width="@((Small) ? 22 : 32)"
+                  Height="@((Small) ? 22 : 32)"/>
+
+        @if (ShowText)
+        {
+            <MudText Style="@(Small ? "font-size: 1rem;" : "font-size: 1.25rem;")">
+                @Resource.Name
+            </MudText>
+        }
+    </div>
+</MudTooltip>
+
+@code {
+
+    [Parameter] public Resource Resource { get; set; }
+    [Parameter] public bool Small { get; set; }
+    [Parameter] public bool ShowText { get; set; }
+    [Parameter] public int? ShownAmount { get; set; }
+
+
+}

@@ -1,0 +1,16 @@
+@using MudBlazor
+
+<MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+    <MudIcon Icon="@Icon" Size="Size.Small" />
+    <MudText Typo="Typo.h6">@Title</MudText>
+    @if (!string.IsNullOrEmpty(Badge))
+    {
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Tertiary">@Badge</MudChip>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Badge { get; set; }
+}
